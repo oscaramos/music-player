@@ -1,11 +1,13 @@
 import React, { useEffect, useRef, useState } from 'react'
-import styled from 'styled-components'
+import styled  from 'styled-components'
+
+import Loader from './Loader'
+import { getTopSongs } from './api'
 
 import { ReactComponent as PlayIcon } from './assets/play-solid.svg'
 import { ReactComponent as ForwardIcon } from './assets/forward-solid.svg'
 import { ReactComponent as BackwardIcon } from './assets/backward-solid.svg'
 import { ReactComponent as PauseIcon } from './assets/pause-solid.svg'
-import { getTopSongs } from './api'
 
 const Container = styled.div`
   display: flex;
@@ -85,30 +87,26 @@ const DurationWrapper = styled.div`
   justify-content: space-between;
 `
 
-function App() {
+function Player({
+    status,
+    songs
+  })
+{
   const currentTime = "0:00"
   const duration = "2:06"
 
   const playerRef = useRef()
-  const [status, setStatus] = useState('paused')
-  const [songs, setSongs] = useState([
-    {
-      name: 'Electric Chill Machine',
-      artist: 'Jacinto Design',
-      songUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3',
-      imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/3/35/Neckertal_20150527-6384.jpg'
-    }
-  ])
+  const [playerState, setPlayerState] = useState('paused')
   const [currentSong, setCurrentSong] = useState(0)
 
   const playSong = () => {
     playerRef.current.play()
-    setStatus('playing')
+    setPlayerState('playing')
   }
 
   const pauseSong = () => {
     playerRef.current.pause()
-    setStatus('paused')
+    setPlayerState('paused')
   }
 
   const nextSong = () => {
@@ -119,54 +117,71 @@ function App() {
     setCurrentSong((currentSong + songs.length - 1) % songs.length)
   }
 
+  if (status === 'loading') {
+    return <Loader />
+  }
+
+  return (
+    <PlayerContainer>
+      <Img url={songs[currentSong].imageUrl} />
+      <H2 style={{ marginTop: 300, marginBottom: 5 }}>
+        {songs[currentSong].name}
+      </H2>
+      <H3>
+        {songs[currentSong].artist}
+      </H3>
+      <audio
+        src={songs[currentSong].songUrl}
+        ref={playerRef}
+      />
+      <ProgressContainer>
+        <Progress />
+        <DurationWrapper>
+          <span>{ currentTime }</span>
+          <span>{ duration }</span>
+        </DurationWrapper>
+      </ProgressContainer>
+      <div style={{ display: 'flex', flexDirection: 'row', marginTop: -10 }}>
+        <IconButton onClick={nextSong}>
+          <BackwardIcon title='Previous' />
+        </IconButton>
+        {
+          playerState === 'paused'?
+            <IconButton onClick={playSong} style={{ marginLeft: 30, marginRight: 30 }}>
+              <PlayIcon title='Play' />
+            </IconButton>
+            :
+            <IconButton onClick={pauseSong} style={{ marginLeft: 30, marginRight: 30 }}>
+              <PauseIcon title='Pause' />
+            </IconButton>
+        }
+        <IconButton onClick={prevSong}>
+          <ForwardIcon title='Next' />
+        </IconButton>
+      </div>
+    </PlayerContainer>
+  )
+}
+
+function App() {
+  const [songs, setSongs] = useState([])
+
+  const [status, setStatus] = useState('loading')
+
   useEffect(() => {
     getTopSongs()
       .then(topSongs => {
-        console.log(topSongs)
         setSongs(topSongs)
+        setStatus('resolved')
+      })
+      .catch(() => {
+        setStatus('rejected')
       })
   }, [])
 
   return (
     <Container>
-      <PlayerContainer>
-        <Img url={songs[currentSong].imageUrl} />
-        <H2 style={{ marginTop: 300, marginBottom: 5 }}>
-          {songs[currentSong].name}
-        </H2>
-        <H3>
-          {songs[currentSong].artist}
-        </H3>
-        <audio
-          src={songs[currentSong].songUrl}
-          ref={playerRef}
-        />
-        <ProgressContainer>
-          <Progress />
-          <DurationWrapper>
-            <span>{ currentTime }</span>
-            <span>{ duration }</span>
-          </DurationWrapper>
-        </ProgressContainer>
-        <div style={{ display: 'flex', flexDirection: 'row', marginTop: -10 }}>
-          <IconButton onClick={nextSong}>
-            <BackwardIcon title='Previous' />
-          </IconButton>
-          {
-            status === 'paused'?
-              <IconButton onClick={playSong} style={{ marginLeft: 30, marginRight: 30 }}>
-                <PlayIcon title='Play' />
-              </IconButton>
-            :
-              <IconButton onClick={pauseSong} style={{ marginLeft: 30, marginRight: 30 }}>
-                <PauseIcon title='Pause' />
-              </IconButton>
-          }
-          <IconButton onClick={prevSong}>
-            <ForwardIcon title='Next' />
-          </IconButton>
-        </div>
-      </PlayerContainer>
+      <Player status={status} songs={songs} />
     </Container>
   );
 }
