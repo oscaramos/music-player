@@ -85,7 +85,7 @@ const DurationWrapper = styled.div`
   justify-content: space-between;
 `
 
-// Modified from https://stackoverflow.com/a/52560608/13187269
+// Display seconds on format MM:SS
 function display (seconds) {
   const format = val => `0${Math.floor(val)}`.slice(-2)
   const minutes = (seconds % 3600) / 60
@@ -93,7 +93,7 @@ function display (seconds) {
   return [minutes, seconds % 60].map(format).join(':')
 }
 
-const Audio = React.forwardRef( ({ songUrl }, audioRef) => {
+const Audio = React.forwardRef( function ({ songUrl }, audioRef) {
   // All times are on seconds
   const [time, setTime] = useState(0)
   const [duration, setDuration] = useState(0)
@@ -163,7 +163,7 @@ function Player({ status, songs })
   return (
     <PlayerContainer>
       <Img url={songs[currentSong].imageUrl} />
-      <H2 style={{ marginTop: 300, marginBottom: 5 }}>
+      <H2 style={{ marginTop: 300, marginBottom: 5, fontSize: songs[currentSong].name.length > 20? '1.25em': undefined }}>
         {songs[currentSong].name}
       </H2>
       <H3>
@@ -195,6 +195,11 @@ function Player({ status, songs })
   )
 }
 
+// (randomly reorders) elements of the array
+const shuffle = array => {
+  return array.sort(() => Math.random() - 0.5);
+}
+
 function App() {
   const [songs, setSongs] = useState([])
   const [status, setStatus] = useState('loading')
@@ -202,7 +207,7 @@ function App() {
   useEffect(() => {
     getTopSongs()
       .then(topSongs => {
-        setSongs(topSongs)
+        setSongs(shuffle(topSongs))
         setStatus('resolved')
       })
       .catch(() => {
