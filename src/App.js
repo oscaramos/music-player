@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react'
 import styled from 'styled-components'
 import ReactAudioPlayer from 'react-audio-player';
 
 import { ReactComponent as PlayIcon } from './assets/play-solid.svg'
 import { ReactComponent as ForwardIcon } from './assets/forward-solid.svg'
 import { ReactComponent as BackwardIcon } from './assets/backward-solid.svg'
+import { ReactComponent as PauseIcon } from './assets/pause-solid.svg'
 
 const Container = styled.div`
   display: flex;
@@ -16,7 +17,7 @@ const Container = styled.div`
 const PlayerContainer = styled.div`
   width: 400px;
   height: 500px;
-  background: #DFDFDF;
+  background: #E7E7E7;
   display: flex;
   align-items: center;
   flex-direction: column;
@@ -88,6 +89,19 @@ function App() {
   const currentTime = "0:00"
   const duration = "2:06"
 
+  const playerRef = useRef()
+  const [status, setStatus] = useState('paused')
+
+  const playSong = () => {
+    playerRef.current.play()
+    setStatus('playing')
+  }
+
+  const pauseSong = () => {
+    playerRef.current.pause()
+    setStatus('paused')
+  }
+
   return (
     <Container>
       <PlayerContainer>
@@ -98,8 +112,9 @@ function App() {
         <H3>
           Jacinto Design
         </H3>
-        <ReactAudioPlayer
+        <audio
           src='https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3'
+          ref={playerRef}
         />
         <ProgressContainer>
           <Progress />
@@ -112,9 +127,16 @@ function App() {
           <IconButton>
             <BackwardIcon title='Previous' />
           </IconButton>
-          <IconButton style={{ marginLeft: 30, marginRight: 30 }}>
-            <PlayIcon title='Play' />
-          </IconButton>
+          {
+            status === 'paused'?
+              <IconButton onClick={playSong} style={{ marginLeft: 30, marginRight: 30 }}>
+                <PlayIcon title='Play' />
+              </IconButton>
+            :
+              <IconButton onClick={pauseSong} style={{ marginLeft: 30, marginRight: 30 }}>
+                <PauseIcon title='Pause' />
+              </IconButton>
+          }
           <IconButton>
             <ForwardIcon title='Next' />
           </IconButton>
