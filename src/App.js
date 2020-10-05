@@ -75,9 +75,7 @@ const Progress = styled.div`
   background: #242323;
   border-radius: 5px;
   height: 100%;
-  /* Change this to show progress */
-  width: 10%; 
-  transition: width 0.1s linear;
+  transition: width 0.2s linear;
 `
 
 const DurationWrapper = styled.div`
@@ -87,25 +85,66 @@ const DurationWrapper = styled.div`
   justify-content: space-between;
 `
 
-function Player({
-    status,
-    songs
-  })
-{
-  const currentTime = "0:00"
-  const duration = "2:06"
+// Modified from https://stackoverflow.com/a/52560608/13187269
+function display (seconds) {
+  const format = val => `0${Math.floor(val)}`.slice(-2)
+  const minutes = (seconds % 3600) / 60
 
-  const playerRef = useRef()
+  return [minutes, seconds % 60].map(format).join(':')
+}
+
+const Audio = React.forwardRef( ({ songUrl }, audioRef) => {
+  // All times are on seconds
+  const [time, setTime] = useState(0)
+  const [duration, setDuration] = useState(0)
+  const [progress, setProgress] = useState(0)
+
+  const displayTime = display(time)
+  const displayDuration = display(duration)
+
+  const handleTimeUpdate = () => {
+    setTime(audioRef.current.currentTime)
+  }
+
+  const handleCanPlay = () => {
+    setDuration(audioRef.current.duration)
+  }
+
+  useEffect(() => {
+    const newProgress = (time / duration) * 100
+    setProgress(newProgress)
+  }, [time, duration])
+
+  return (
+    <ProgressContainer>
+      <Progress style={{ width: `${progress}%` }} />
+      <DurationWrapper>
+        <span>{displayTime}</span>
+        <span>{displayDuration}</span>
+      </DurationWrapper>
+      <audio
+        src={songUrl}
+        ref={audioRef}
+        onTimeUpdate={handleTimeUpdate}
+        onCanPlay={handleCanPlay}
+      />
+    </ProgressContainer>
+  )
+})
+
+function Player({ status, songs })
+{
+  const audioRef = useRef()
   const [playerState, setPlayerState] = useState('paused')
   const [currentSong, setCurrentSong] = useState(0)
 
   const playSong = () => {
-    playerRef.current.play()
+    audioRef.current.play()
     setPlayerState('playing')
   }
 
   const pauseSong = () => {
-    playerRef.current.pause()
+    audioRef.current.pause()
     setPlayerState('paused')
   }
 
@@ -130,23 +169,16 @@ function Player({
       <H3>
         {songs[currentSong].artist}
       </H3>
-      <audio
-        src={songs[currentSong].songUrl}
-        ref={playerRef}
+      <Audio
+        songUrl={songs[currentSong].songUrl}
+        ref={audioRef}
       />
-      <ProgressContainer>
-        <Progress />
-        <DurationWrapper>
-          <span>{ currentTime }</span>
-          <span>{ duration }</span>
-        </DurationWrapper>
-      </ProgressContainer>
       <div style={{ display: 'flex', flexDirection: 'row', marginTop: -10 }}>
         <IconButton onClick={nextSong}>
           <BackwardIcon title='Previous' />
         </IconButton>
         {
-          playerState === 'paused'?
+          playerState === 'paused' ?
             <IconButton onClick={playSong} style={{ marginLeft: 30, marginRight: 30 }}>
               <PlayIcon title='Play' />
             </IconButton>
@@ -165,7 +197,6 @@ function Player({
 
 function App() {
   const [songs, setSongs] = useState([])
-
   const [status, setStatus] = useState('loading')
 
   useEffect(() => {
