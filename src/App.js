@@ -23,7 +23,7 @@ const PlayerContainer = styled.div`
   display: flex;
   align-items: center;
   flex-direction: column;
-  box-shadow: rgba(0, 0, 0, 0.25) 0 14px 28px, rgba(0, 0, 0, 0.22) 0px 10px 10px;
+  box-shadow: rgba(0, 0, 0, 0.25) 0 14px 28px, rgba(0, 0, 0, 0.22) 0 10px 10px;
   border-radius: 20px;
   
   @media screen and (max-width: 600px) {
@@ -47,7 +47,7 @@ const Img = styled.div`
   height: 300px;
   position: absolute;
   transform: translate(0px, -50px);
-  box-shadow: rgba(0, 0, 0, 0.25) 0 14px 28px, rgba(0, 0, 0, 0.22) 0px 10px 10px;
+  box-shadow: rgba(0, 0, 0, 0.25) 0 14px 28px, rgba(0, 0, 0, 0.22) 0 10px 10px;
   border-radius: 20px;
 `
 
@@ -99,7 +99,7 @@ const display = seconds => {
   return [minutes, seconds % 60].map(format).join(':')
 }
 
-const Audio = React.forwardRef( function ({ songUrl }, audioRef) {
+const Audio = React.forwardRef( function ({ songUrl, onEnded, onCanPlay }, audioRef) {
   // All times are on seconds
   const [time, setTime] = useState(0)
   const [duration, setDuration] = useState(0)
@@ -114,6 +114,17 @@ const Audio = React.forwardRef( function ({ songUrl }, audioRef) {
 
   const handleCanPlay = () => {
     setDuration(audioRef.current.duration)
+    onCanPlay()
+  }
+
+  const manualSetTime = (e) => {
+    // Calculate the new time for the song
+    const clickX = e.nativeEvent.offsetX
+    const width = e.target.clientWidth
+    const newTime = (clickX / width) * duration
+    setTime(newTime)
+    // Set the song time to new time
+    audioRef.current.currentTime = newTime
   }
 
   useEffect(() => {
@@ -122,9 +133,9 @@ const Audio = React.forwardRef( function ({ songUrl }, audioRef) {
   }, [time, duration])
 
   return (
-    <ProgressContainer>
-      <Progress style={{ width: `${progress}%` }} />
-      <DurationWrapper>
+    <ProgressContainer onClick={manualSetTime}>
+      <Progress style={{ width: `${progress}%`, pointerEvents: 'none' }} />
+      <DurationWrapper style={{ pointerEvents: 'none' }}>
         <span>{displayTime}</span>
         <span>{displayDuration}</span>
       </DurationWrapper>
@@ -133,6 +144,7 @@ const Audio = React.forwardRef( function ({ songUrl }, audioRef) {
         ref={audioRef}
         onTimeUpdate={handleTimeUpdate}
         onCanPlay={handleCanPlay}
+        onEnded={onEnded}
       />
     </ProgressContainer>
   )
@@ -163,6 +175,18 @@ function Player({ status, songs }) {
     setCurrentSong((currentSong + songs.length - 1) % songs.length)
   }
 
+  const handleEnded = () => {
+    nextSong()
+  }
+
+  const handleCanPlay = () => {
+    if (playerState === 'playing') {
+      playSong()
+    } else {
+      pauseSong()
+    }
+  }
+
   if (status === 'loading') {
     return <Loader />
   }
@@ -178,10 +202,12 @@ function Player({ status, songs }) {
       </H3>
       <Audio
         songUrl={song.songUrl}
+        onEnded={handleEnded}
+        onCanPlay={handleCanPlay}
         ref={audioRef}
       />
       <ButtonsContainer>
-        <IconButton onClick={nextSong}>
+        <IconButton onClick={prevSong}>
           <BackwardIcon title='Previous' />
         </IconButton>
         {
@@ -194,7 +220,7 @@ function Player({ status, songs }) {
               <PauseIcon title='Pause' />
             </IconButton>
         }
-        <IconButton onClick={prevSong}>
+        <IconButton onClick={nextSong}>
           <ForwardIcon title='Next' />
         </IconButton>
       </ButtonsContainer>
