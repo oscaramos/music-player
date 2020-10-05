@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react'
-import styled  from 'styled-components'
+import styled from 'styled-components'
 
 import Loader from './Loader'
 import { getTopSongs } from './api'
@@ -85,8 +85,14 @@ const DurationWrapper = styled.div`
   justify-content: space-between;
 `
 
+const ButtonsContainer = styled.div`
+  display: flex; 
+  flex-direction: row;
+  margin-top: -10px;
+`
+
 // Display seconds on format MM:SS
-function display (seconds) {
+const display = seconds => {
   const format = val => `0${Math.floor(val)}`.slice(-2)
   const minutes = (seconds % 3600) / 60
 
@@ -132,11 +138,12 @@ const Audio = React.forwardRef( function ({ songUrl }, audioRef) {
   )
 })
 
-function Player({ status, songs })
-{
+function Player({ status, songs }) {
   const audioRef = useRef()
   const [playerState, setPlayerState] = useState('paused')
   const [currentSong, setCurrentSong] = useState(0)
+
+  const song = songs[currentSong]
 
   const playSong = () => {
     audioRef.current.play()
@@ -162,18 +169,18 @@ function Player({ status, songs })
 
   return (
     <PlayerContainer>
-      <Img url={songs[currentSong].imageUrl} />
-      <H2 style={{ marginTop: 300, marginBottom: 5, fontSize: songs[currentSong].name.length > 20? '1.25em': undefined }}>
-        {songs[currentSong].name}
+      <Img url={song.imageUrl} />
+      <H2 style={{ marginTop: 300, marginBottom: 5, fontSize: song.name.length > 20? '1.25em': undefined }}>
+        {song.name}
       </H2>
       <H3>
-        {songs[currentSong].artist}
+        {song.artist}
       </H3>
       <Audio
-        songUrl={songs[currentSong].songUrl}
+        songUrl={song.songUrl}
         ref={audioRef}
       />
-      <div style={{ display: 'flex', flexDirection: 'row', marginTop: -10 }}>
+      <ButtonsContainer>
         <IconButton onClick={nextSong}>
           <BackwardIcon title='Previous' />
         </IconButton>
@@ -190,7 +197,7 @@ function Player({ status, songs })
         <IconButton onClick={prevSong}>
           <ForwardIcon title='Next' />
         </IconButton>
-      </div>
+      </ButtonsContainer>
     </PlayerContainer>
   )
 }
