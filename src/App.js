@@ -1,11 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react'
 import styled from 'styled-components'
-import ReactAudioPlayer from 'react-audio-player';
 
 import { ReactComponent as PlayIcon } from './assets/play-solid.svg'
 import { ReactComponent as ForwardIcon } from './assets/forward-solid.svg'
 import { ReactComponent as BackwardIcon } from './assets/backward-solid.svg'
 import { ReactComponent as PauseIcon } from './assets/pause-solid.svg'
+import { getTopSongs } from './api'
 
 const Container = styled.div`
   display: flex;
@@ -39,7 +39,7 @@ const IconButton = styled.div`
 `
 
 const Img = styled.div`
-  background: url("https://upload.wikimedia.org/wikipedia/commons/3/35/Neckertal_20150527-6384.jpg");
+  background: ${props => `url(${props.url})`};
   background-size: cover;
   width: 300px;
   height: 300px;
@@ -91,6 +91,15 @@ function App() {
 
   const playerRef = useRef()
   const [status, setStatus] = useState('paused')
+  const [songs, setSongs] = useState([
+    {
+      name: 'Electric Chill Machine',
+      artist: 'Jacinto Design',
+      songUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3',
+      imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/3/35/Neckertal_20150527-6384.jpg'
+    }
+  ])
+  const [currentSong, setCurrentSong] = useState(0)
 
   const playSong = () => {
     playerRef.current.play()
@@ -102,18 +111,34 @@ function App() {
     setStatus('paused')
   }
 
+  const nextSong = () => {
+    setCurrentSong((currentSong + 1) % songs.length)
+  }
+
+  const prevSong = () => {
+    setCurrentSong((currentSong + songs.length - 1) % songs.length)
+  }
+
+  useEffect(() => {
+    getTopSongs()
+      .then(topSongs => {
+        console.log(topSongs)
+        setSongs(topSongs)
+      })
+  }, [])
+
   return (
     <Container>
       <PlayerContainer>
-        <Img />
+        <Img url={songs[currentSong].imageUrl} />
         <H2 style={{ marginTop: 300, marginBottom: 5 }}>
-          Electric Chill Machine
+          {songs[currentSong].name}
         </H2>
         <H3>
-          Jacinto Design
+          {songs[currentSong].artist}
         </H3>
         <audio
-          src='https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3'
+          src={songs[currentSong].songUrl}
           ref={playerRef}
         />
         <ProgressContainer>
@@ -124,7 +149,7 @@ function App() {
           </DurationWrapper>
         </ProgressContainer>
         <div style={{ display: 'flex', flexDirection: 'row', marginTop: -10 }}>
-          <IconButton>
+          <IconButton onClick={nextSong}>
             <BackwardIcon title='Previous' />
           </IconButton>
           {
@@ -137,7 +162,7 @@ function App() {
                 <PauseIcon title='Pause' />
               </IconButton>
           }
-          <IconButton>
+          <IconButton onClick={prevSong}>
             <ForwardIcon title='Next' />
           </IconButton>
         </div>
