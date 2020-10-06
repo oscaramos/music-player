@@ -8,6 +8,8 @@ import { ReactComponent as PlayIcon } from './assets/play-solid.svg'
 import { ReactComponent as ForwardIcon } from './assets/forward-solid.svg'
 import { ReactComponent as BackwardIcon } from './assets/backward-solid.svg'
 import { ReactComponent as PauseIcon } from './assets/pause-solid.svg'
+import { ReactComponent as RandomIcon } from './assets/random-solid.svg'
+import { ReactComponent as RepeatIcon } from './assets/repeat-solid.svg'
 
 const Container = styled.div`
   display: flex;
@@ -89,6 +91,7 @@ const ButtonsContainer = styled.div`
   display: flex; 
   flex-direction: row;
   margin-top: -10px;
+  gap: 30px;
 `
 
 // Display seconds on format MM:SS
@@ -99,7 +102,7 @@ const display = seconds => {
   return [minutes, seconds % 60].map(format).join(':')
 }
 
-const Audio = React.forwardRef( function ({ songUrl, onEnded, onCanPlay }, audioRef) {
+const Audio = React.forwardRef(function ({ songUrl, onEnded, onCanPlay }, audioRef) {
   // All times are on seconds
   const [time, setTime] = useState(0)
   const [duration, setDuration] = useState(0)
@@ -150,10 +153,11 @@ const Audio = React.forwardRef( function ({ songUrl, onEnded, onCanPlay }, audio
   )
 })
 
-function Player({ status, songs }) {
+function Player({ status, songs, onShuffleSongs }) {
   const audioRef = useRef()
   const [playerState, setPlayerState] = useState('paused')
   const [currentSong, setCurrentSong] = useState(0)
+  const [repeatSongOnEnd, setRepeatSongOnEnd] = useState(false)
 
   const song = songs[currentSong]
 
@@ -175,8 +179,16 @@ function Player({ status, songs }) {
     setCurrentSong((currentSong + songs.length - 1) % songs.length)
   }
 
+  const toggleRepeatSong = () => {
+    setRepeatSongOnEnd(!repeatSongOnEnd)
+  }
+
   const handleEnded = () => {
-    nextSong()
+    if (repeatSongOnEnd) {
+      audioRef.current.load()
+    } else {
+      nextSong()
+    }
   }
 
   const handleCanPlay = () => {
@@ -194,7 +206,7 @@ function Player({ status, songs }) {
   return (
     <PlayerContainer>
       <Img url={song.imageUrl} />
-      <H2 style={{ marginTop: 300, marginBottom: 5, fontSize: song.name.length > 20? '1.25em': undefined }}>
+      <H2 style={{ marginTop: 300, marginBottom: 5, fontSize: song.name.length > 20 ? '1.25em' : undefined }}>
         {song.name}
       </H2>
       <H3>
@@ -207,21 +219,27 @@ function Player({ status, songs }) {
         ref={audioRef}
       />
       <ButtonsContainer>
+        <IconButton onClick={onShuffleSongs}>
+          <RandomIcon title='Shuffle' />
+        </IconButton>
         <IconButton onClick={prevSong}>
           <BackwardIcon title='Previous' />
         </IconButton>
         {
           playerState === 'paused' ?
-            <IconButton onClick={playSong} style={{ marginLeft: 30, marginRight: 30 }}>
+            <IconButton onClick={playSong}>
               <PlayIcon title='Play' />
             </IconButton>
             :
-            <IconButton onClick={pauseSong} style={{ marginLeft: 30, marginRight: 30 }}>
+            <IconButton onClick={pauseSong}>
               <PauseIcon title='Pause' />
             </IconButton>
         }
         <IconButton onClick={nextSong}>
           <ForwardIcon title='Next' />
+        </IconButton>
+        <IconButton onClick={toggleRepeatSong}>
+          <RepeatIcon title={repeatSongOnEnd? `Don't repeat`: 'Repeat'} style={{ color: repeatSongOnEnd? '#1DF369': undefined }}/>
         </IconButton>
       </ButtonsContainer>
     </PlayerContainer>
@@ -229,8 +247,10 @@ function Player({ status, songs }) {
 }
 
 // (randomly reorders) elements of the array
-const shuffle = array => {
-  return array.sort(() => Math.random() - 0.5);
+// from https://stackoverflow.com/questions/2450954/how-to-randomize-shuffle-a-javascript-array
+// It's the slowest method but I only need to shuffle a few items (<=10)
+function shuffle(array) {
+  return [...array].sort( () => .5 - Math.random() );
 }
 
 function App() {
@@ -248,11 +268,16 @@ function App() {
       })
   }, [])
 
+  const shuffleSongs = () => {
+    const shuffledSongs = shuffle(songs)
+    setSongs(shuffledSongs)
+  }
+
   return (
     <Container>
-      <Player status={status} songs={songs} />
+      <Player status={status} songs={songs} onShuffleSongs={shuffleSongs} />
     </Container>
-  );
+  )
 }
 
-export default App;
+export default App
