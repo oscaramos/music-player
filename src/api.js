@@ -2,6 +2,8 @@ import axios from 'axios'
 
 const API_KEY = 'YTkxZTRhNzAtODdlNy00ZjMzLTg0MWItOTc0NmZmNjU4Yzk4'
 
+const Http2Https = url => typeof url === 'string' ? `https${url.substring(4)}` : url
+
 const getImageUrl = async (song) => {
   // I feel not reliable the api and their docs
   // this causes me checking if data exists avoiding possible errors
@@ -22,8 +24,7 @@ const getImageUrl = async (song) => {
           apikey: API_KEY
         }
       })
-      const imageUrl = resp.data.images[0].url
-      return imageUrl
+      return Http2Https(resp.data.images[0].url)
     }
   }
   // Load by default this image if there are not image
