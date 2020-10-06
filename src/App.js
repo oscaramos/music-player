@@ -3,6 +3,7 @@ import styled from 'styled-components'
 
 import Loader from './Loader'
 import { getTopSongs } from './api'
+import { darkTheme } from './Themes'
 
 import { ReactComponent as PlayIcon } from './assets/play-solid.svg'
 import { ReactComponent as ForwardIcon } from './assets/forward-solid.svg'
@@ -21,7 +22,7 @@ const Container = styled.div`
 const PlayerContainer = styled.div`
   width: 400px;
   height: 500px;
-  background: #E7E7E7;
+  background: ${({ theme }) => theme.surface};
   display: flex;
   align-items: center;
   flex-direction: column;
@@ -34,8 +35,8 @@ const PlayerContainer = styled.div`
 `
 
 const IconButton = styled.div`
-  color: #818181; 
-  width: 40px;
+  color: ${({ theme }) => theme.onSurface}; 
+  width: 30px;
   cursor: pointer;
   :hover {
     filter: brightness(80%);
@@ -56,28 +57,49 @@ const Img = styled.div`
 const H2 = styled.h2`
   font-family: 'Spartan', sans-serif;
   font-weight: bold;
+  color: white;
 `
 
 const H3 = styled.h3`
   font-family: 'Spartan', sans-serif;
   font-weight: normal;
   margin: 0;
+  color: ${({ theme }) => theme.onSurface};
+`
+
+const Progress = styled.div`
+  background: ${({ theme }) => theme.onSurface};
+  border-radius: 5px;
+  height: 100%;
+  transition: width 0.2s linear;
+`
+
+const ProgressCircle = styled.div`
+  position: absolute;
+  background: white;
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  top: -4px;
+  display: none;
 `
 
 const ProgressContainer = styled.div`
-  background: #fff;
+  background: ${({ theme }) => theme.onSurfaceAlt};
   border-radius: 5px;
   cursor: pointer;
   margin: 40px 20px;
   height: 4px;
   width: 90%;
-`
-
-const Progress = styled.div`
-  background: #242323;
-  border-radius: 5px;
-  height: 100%;
-  transition: width 0.2s linear;
+  position: relative;
+  
+  :hover ${Progress} {
+    background: ${({ theme }) => theme.primaryColor};    
+  }
+  
+  :hover ${ProgressCircle} {
+    display: inherit;    
+  }
 `
 
 const DurationWrapper = styled.div`
@@ -85,6 +107,7 @@ const DurationWrapper = styled.div`
   top: -25px;
   display: flex;
   justify-content: space-between;
+  color: ${({ theme }) => theme.onSurface};
 `
 
 const ButtonsContainer = styled.div`
@@ -138,6 +161,7 @@ const Audio = React.forwardRef(function ({ songUrl, onEnded, onCanPlay }, audioR
   return (
     <ProgressContainer onClick={manualSetTime}>
       <Progress style={{ width: `${progress}%`, pointerEvents: 'none' }} />
+      <ProgressCircle style={{ left: `calc(${progress}% - 5px)`, pointerEvents: 'none' }} />
       <DurationWrapper style={{ pointerEvents: 'none' }}>
         <span>{displayTime}</span>
         <span>{displayDuration}</span>
@@ -239,7 +263,7 @@ function Player({ status, songs, onShuffleSongs }) {
           <ForwardIcon title='Next' />
         </IconButton>
         <IconButton onClick={toggleRepeatSong}>
-          <RepeatIcon title={repeatSongOnEnd? `Don't repeat`: 'Repeat'} style={{ color: repeatSongOnEnd? '#1DF369': undefined }}/>
+          <RepeatIcon title={repeatSongOnEnd? `Don't repeat`: 'Repeat'} style={{ color: repeatSongOnEnd? darkTheme.primaryColor : undefined }}/>
         </IconButton>
       </ButtonsContainer>
     </PlayerContainer>
@@ -248,7 +272,7 @@ function Player({ status, songs, onShuffleSongs }) {
 
 // (randomly reorders) elements of the array
 // from https://stackoverflow.com/questions/2450954/how-to-randomize-shuffle-a-javascript-array
-// It's the slowest method but I only need to shuffle a few items (<=10)
+// It's the slowest method but I only need to shuffle a few items (<=100 sure)
 function shuffle(array) {
   return [...array].sort( () => .5 - Math.random() );
 }
@@ -258,7 +282,7 @@ function App() {
   const [status, setStatus] = useState('loading')
 
   useEffect(() => {
-    getTopSongs()
+    getTopSongs({ limit: 25 })
       .then(topSongs => {
         setSongs(shuffle(topSongs))
         setStatus('resolved')
