@@ -23,7 +23,7 @@ const LoaderContainer = styled.div`
     position: absolute;
     left: 8px;
     width: 16px;
-    background: #1e1e1e;
+    background: ${({ theme }) => theme.onSurface};
     animation: ${loaderKeyframes} 1.2s cubic-bezier(0, 0.5, 0.5, 1) infinite;
   }
   
