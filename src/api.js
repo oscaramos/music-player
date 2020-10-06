@@ -33,13 +33,14 @@ const getImageUrl = async (song) => {
 
 // Get the top songs from Napster API
 // Link to documentation: https://developer.napster.com/api/v2.2#tracks
-export const getTopSongs = async () => {
+export const getTopSongs = async ({ limit, ...overrides }) => {
   // Fetch to api for return songs
   const resp = await axios.get(`https://api.napster.com/v2.2/tracks/top`, {
     params: {
+      apikey: API_KEY,
       range: 'year', // Valid values: day, week, month, year and life. Default is month
-      limit: 10,
-      apikey: API_KEY
+      limit,
+      ...overrides
     }
   })
   const songs = resp.data.tracks
