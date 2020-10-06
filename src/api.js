@@ -34,7 +34,7 @@ const getImageUrl = async (song) => {
 // Link to documentation: https://developer.napster.com/api/v2.2#tracks
 export const getTopSongs = async () => {
   // Fetch to api for return songs
-  const resp = await axios.get(`http://api.napster.com/v2.2/tracks/top`, {
+  const resp = await axios.get(`https://api.napster.com/v2.2/tracks/top`, {
     params: {
       range: 'year', // Valid values: day, week, month, year and life. Default is month
       limit: 10,
